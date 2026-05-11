@@ -45,7 +45,8 @@ manually choose the action to apply for each file
 automatically ignore selected PowerShell files
 ```
 
-The preview uses `robocopy`, which gives a quick overview of the differences between the two folders.
+The preview uses `robocopy`, which gives a quick overview of the differences between the two folders.  \
+Robocopy was also chosen because it is natively available on Windows 10 and Windows 11, allowing the script to be used without additional installation or specific administrator rights.
 
 ## Available modes
 
