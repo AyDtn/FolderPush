@@ -45,7 +45,8 @@ choisir manuellement l’action à effectuer pour chaque fichier
 ignorer automatiquement certains fichiers PowerShell
 ```
 
-La simulation utilise `robocopy`, ce qui permet d’avoir une première vue rapide des différences entre les deux dossiers.
+La simulation utilise `robocopy`, ce qui permet d’avoir une première vue rapide des différences entre les deux dossiers.  \
+Robocopy a également été choisi car il est intégré nativement à Windows 10 et Windows 11, ce qui permet d’utiliser le script sans installation supplémentaire ni droits administrateur particuliers.
 
 ## Modes disponibles
 
