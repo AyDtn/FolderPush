@@ -1,193 +1,328 @@
 # FolderPush
 
-![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue?logo=powershell&logoColor=white)
-![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
+[English](README.md) | [Français](README.fr.md)
 
-[Version française](README.fr.md)
+![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-5391FE?logo=powershell&logoColor=white)
+![Platform](https://img.shields.io/badge/platform-Windows-0078D4?logo=windows)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-PowerShell script used to synchronize a work folder with a public folder.
+**FolderPush** is a PowerShell script for controlled comparison and one-way synchronization between two folders.
 
-The goal is simple: keep a work folder where files can be edited freely, then push a clean version to another folder intended to be published, shared or used as a stable version.
-
-This script is not intended to replace Git. It is more of a local synchronization layer between two folders, with a workflow close to a `push`, but without version history.
-
-## Principle
-
-The script works with two folders:
+It keeps a **source folder** as the reference and updates a **destination folder** while allowing you to review, copy, overwrite, back up, or remove files in a controlled way.
 
 ```text
-Work folder  ->  Public folder
+Source folder  ───────────────►  Destination folder
+  reference          one-way synchronization
 ```
 
-The work folder is considered the main source.
-
-The public folder is the destination folder. It can be updated in several ways depending on the need:
-
-```text
-copy new files
-update modified files
-delete files that no longer exist in the source
-fully synchronize both folders
-choose actions file by file
-```
+FolderPush is not a replacement for Git and does not provide version history. It is intended as a simple and readable local synchronization tool between two locations.
 
 ## Features
 
-The script can:
+- recursive comparison of source and destination folders;
+- detection of identical, different, new, and removed files;
+- copying of new files;
+- replacement of different files in the destination;
+- full one-way synchronization;
+- interactive file-by-file processing;
+- backup of files removed from the destination instead of permanent deletion;
+- external text-based configuration;
+- exclusions by file name, wildcard pattern, folder, or extension;
+- global summary and folder-by-folder summary;
+- detailed comparison table;
+- CSV export;
+- strict SHA-256 content verification;
+- automatic execution logs;
+- automatic creation of the destination folder when it does not exist.
+
+## How it works
+
+The source folder is always treated as the reference.
+
+| Status | Meaning |
+|---|---|
+| `Identical` | The file is considered identical in both folders. |
+| `Different` | The file exists in both folders but differs according to the selected comparison method. |
+| `New` | The file exists in the source but not in the destination. |
+| `Removed` | The file no longer exists in the source but still exists in the destination. |
+
+> [!IMPORTANT]
+> FolderPush performs **source-to-destination** synchronization. A change made only in the destination can be overwritten by the source version.
+
+## Comparison methods
+
+### Fast comparison
+
+Synchronization modes use:
+
+- relative path;
+- file name;
+- last modification date rounded to the minute;
+- file size.
+
+This method is fast and avoids small timestamp differences that can occur between file systems.
+
+### Strict SHA-256 verification
+
+Mode `9` calculates SHA-256 hashes to compare the actual content of files.
+
+This method is more reliable, but it can be significantly slower on large folders or large files.
+
+> [!CAUTION]
+> Copy and synchronization actions currently use the fast comparison method. SHA-256 mode is a read-only verification mode. For critical data, run mode `9` before a full synchronization.
+
+## Requirements
+
+- Windows 10 or Windows 11;
+- Windows PowerShell 5.1 or PowerShell 7;
+- read access to the source folder;
+- write access to the destination folder and the script directory.
+
+No third-party dependency or `robocopy` installation is required.
+
+## Repository files
 
 ```text
-preview differences before applying changes
-copy new files only
-copy and overwrite modified files
-delete extra files from the public folder
-run a full synchronization
-manually choose the action to apply for each file
-automatically ignore selected PowerShell files
+FolderPush/
+├── FolderPush.ps1
+├── FolderPush_config.en.example.txt
+├── FolderPush_config.fr.example.txt
+├── README.md
+├── README.fr.md
+└── LICENSE
 ```
 
-The preview uses `robocopy`, which gives a quick overview of the differences between the two folders.  \
-Robocopy was also chosen because it is natively available on Windows 10 and Windows 11, allowing the script to be used without additional installation or specific administrator rights.
-
-## Available modes
-
-When launched, the script offers several choices:
+At runtime, the script always looks for:
 
 ```text
-1 - Copy new files only
-2 - Copy new files and overwrite modified files
-3 - Delete extra files from the public folder only
-4 - Full synchronization: copy + overwrite + delete
-5 - Cancel
-6 - Interactive mode: choose file by file
+FolderPush_config.txt
 ```
 
-## Interactive mode
+Choose one example configuration and copy or rename it to that exact name.
 
-The interactive mode allows files to be handled one by one.
-
-It distinguishes three main cases:
-
-```text
-[NEW]
-File present in the work folder but missing from the public folder.
-
-[MODIFIED]
-File present in both folders, but with a different size or date.
-
-[DELETED FROM SOURCE / PRESENT IN PUBLIC]
-File missing from the work folder but still present in the public folder.
-```
-
-For each detected file, the script asks for confirmation before applying the action.
-
-Example:
-
-```text
-[MODIFIED] index.html
-
-Work version:
-  Date : 11/05/2026 01:34:12
-  Size : 15420 bytes
-
-Public version:
-  Date : 10/05/2026 23:18:45
-  Size : 15420 bytes
-
-Overwrite the public file with the work version? (y/n)
-```
-
-## Ignored files
-
-The script automatically ignores some files to avoid copying the synchronization script itself into the public folder.
-
-By default, files matching the following patterns are ignored:
+English example:
 
 ```powershell
-FolderPush*.ps1
-Push-dossier-*.ps1
+Copy-Item .\FolderPush_config.en.example.txt .\FolderPush_config.txt
 ```
 
-The currently running script is also excluded automatically, even if its name changes.
+French example:
 
-This keeps the public folder clean and avoids sending the PowerShell synchronization file to the destination folder.
+```powershell
+Copy-Item .\FolderPush_config.fr.example.txt .\FolderPush_config.txt
+```
+
+If no configuration file exists, FolderPush creates an English template and exits so you can edit it.
+
+## Installation
+
+Clone the repository:
+
+```powershell
+git clone https://github.com/AyDtn/FolderPush.git
+cd FolderPush
+```
+
+Create the runtime configuration:
+
+```powershell
+Copy-Item .\FolderPush_config.en.example.txt .\FolderPush_config.txt
+```
+
+Then edit the source and destination paths in `FolderPush_config.txt`.
 
 ## Configuration
 
-The two main paths are defined at the beginning of the script:
-
-```powershell
-$source = "C:\Users\Aymeric\Documents\MonProjetTravail"
-$destination = "C:\Users\Aymeric\Documents\MonProjetPublic"
-```
-
-Modify these two variables according to your own folder structure.
-
 Example:
 
-```powershell
-$source = "C:\Users\Aymeric\Documents\Obsidian\WorkVault"
-$destination = "C:\Users\Aymeric\Documents\Public\StableVault"
+```ini
+[Paths]
+Source=C:\Path\SourceFolder
+Destination=D:\Path\DestinationFolder
+
+[IgnoreFileNamesOrPatterns]
+FolderPush*.ps1
+FolderPush*.txt
+Thumbs*.db
+FolderPush_*.csv
+
+[IgnoreFolderNamesOrPatterns]
+FolderPush
+FolderPush_Logs
+FolderPush_Backup
+.git
+
+[IgnoreExtensions]
+.tmp
+.bak
+.old
 ```
+
+### `[Paths]`
+
+| Key | Description |
+|---|---|
+| `Source` | Reference folder to scan. |
+| `Destination` | Folder to update from the source. |
+
+Paths may contain spaces and must not be surrounded by quotation marks.
+
+### `[IgnoreFileNamesOrPatterns]`
+
+File names or PowerShell wildcard patterns to ignore.
+
+Examples:
+
+```ini
+FolderPush*.ps1
+Thumbs*.db
+*.log
+```
+
+### `[IgnoreFolderNamesOrPatterns]`
+
+Any file located inside a matching folder is excluded.
+
+Examples:
+
+```ini
+.git
+FolderPush_Logs
+FolderPush_Backup
+Temp*
+```
+
+### `[IgnoreExtensions]`
+
+File extensions to ignore:
+
+```ini
+.tmp
+.bak
+.old
+```
+
+The leading dot is added automatically when omitted.
+
+> [!WARNING]
+> Do not publish your real `FolderPush_config.txt` when it contains personal paths, user names, or internal network locations. Keep only the example files in the repository and add the runtime configuration to `.gitignore`.
 
 ## Usage
 
-From PowerShell, go to the folder containing the script:
-
-```powershell
-cd "C:\path\to\the\script"
-```
-
-Then run:
+Open PowerShell in the project directory and run:
 
 ```powershell
 .\FolderPush.ps1
 ```
 
-If PowerShell script execution is blocked on the machine, it may be necessary to temporarily allow execution for the current session:
+If script execution is blocked for the current session:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\FolderPush.ps1
 ```
 
-Then run the script again.
+This changes the execution policy only for the current PowerShell window.
 
-## Important behavior
+## Available modes
 
-Choice `4 - Full synchronization` uses a mirror logic.
+| Mode | Action |
+|---:|---|
+| `1` | Copy only new files from the source to the destination. |
+| `2` | Copy new files and overwrite different files in the destination. |
+| `3` | Back up and remove files that no longer exist in the source. |
+| `4` | Full synchronization: copy, overwrite, back up, and remove. |
+| `5` | Cancel without making changes. |
+| `6` | Choose an action for each file interactively. |
+| `7` | Display the comparison table without making changes. |
+| `8` | Export the comparison table to CSV. |
+| `9` | Run strict SHA-256 verification, with table display and/or CSV export. |
 
-This means that the public folder becomes identical to the work folder:
+FolderPush displays a summary and asks for confirmation before global write operations.
+
+## Backups
+
+When a file exists in the destination but no longer exists in the source, FolderPush does not permanently delete it.
+
+It moves the file to:
 
 ```text
-new files are copied
-modified files are overwritten
-files missing from the source are deleted from the public folder
+FolderPush_Backup/
+└── YYYYMMDD_HHMMSS/
+    └── relative file path
 ```
 
-This mode is useful for publishing a clean version, but it should be used after checking the preview.
+The relative directory structure is preserved to simplify manual restoration.
 
-## Use cases
+## Logs
 
-This script can be useful to:
+A log is created for each execution:
 
 ```text
-maintain a public folder from a work folder
-publish a stable version of an Obsidian folder
-separate a draft workspace from a clean workspace
-prepare a folder to send, share or archive
-update a local folder without using Git
+FolderPush_Logs/
+└── FolderPush_Log_YYYYMMDD_HHMMSS.txt
 ```
 
-## Limitations
+It records information such as:
 
-This script does not provide:
+- start and end of execution;
+- source and destination paths;
+- selected mode;
+- copied files;
+- backed-up and removed files;
+- generated CSV exports.
+
+## CSV exports
+
+Mode `8` creates:
 
 ```text
-version history
-branches
-automatic rollback
-advanced conflict management
+FolderPush_Differences_YYYYMMDD_HHMMSS.csv
 ```
 
-For these needs, Git remains more appropriate.
+SHA-256 mode can create:
 
-This script is intentionally simple and local. Its purpose is mainly to avoid manual folder copies while keeping basic control over copied, modified and deleted files.
+```text
+FolderPush_Hash_SHA256_YYYYMMDD_HHMMSS.csv
+```
+
+CSV files use a semicolon as the delimiter.
+
+## Recommended precautions
+
+Before a full synchronization:
+
+1. verify the source and destination paths;
+2. review the comparison summary;
+3. use mode `7` or mode `9` when in doubt;
+4. make sure the source and destination folders are not identical or nested inside one another;
+5. check that enough disk space is available for backups.
+
+## Known limitations
+
+FolderPush does not provide:
+
+- version history;
+- branches;
+- merging of concurrent changes;
+- bidirectional synchronization;
+- synchronization of empty folders;
+- automatic backup restoration;
+- automatic scheduling;
+- conflict resolution when both folders have been modified.
+
+Use Git when you need versioning, branches, merging, or a complete development history.
+
+## Recommended `.gitignore`
+
+```gitignore
+FolderPush_config.txt
+FolderPush_Logs/
+FolderPush_Backup/
+FolderPush_Differences_*.csv
+FolderPush_Hash_SHA256_*.csv
+```
+
+## License
+
+This project is distributed under the MIT License. See [`LICENSE`](LICENSE) for details.

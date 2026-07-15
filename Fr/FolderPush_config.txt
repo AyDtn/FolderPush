@@ -1,0 +1,35 @@
+﻿# FolderPush_config.txt
+# Exemple de configuration pour FolderPush.
+# Les lignes commençant par # sont ignorées.
+# Ne pas mettre de guillemets autour des chemins.
+#
+# Copiez ou renommez ce fichier en :
+# FolderPush_config.txt
+
+[Paths]
+# Dossier de référence.
+Source=C:\Chemin\DossierSource
+
+# Dossier qui sera mis à jour à partir de la source.
+Destination=D:\Chemin\DossierCible
+
+[IgnoreFileNamesOrPatterns]
+# Noms ou motifs PowerShell de fichiers à ignorer.
+FolderPush*.ps1
+FolderPush*.txt
+Push-dossier-*.ps1
+Thumbs*.db
+FolderPush_*.csv
+
+[IgnoreFolderNamesOrPatterns]
+# Noms ou motifs PowerShell de dossiers à ignorer.
+FolderPush
+FolderPush_Logs
+FolderPush_Backup
+.git
+
+[IgnoreExtensions]
+# Extensions de fichiers à ignorer. Le point initial est facultatif.
+.tmp
+.bak
+.old
